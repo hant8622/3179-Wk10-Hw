@@ -1,0 +1,111 @@
+{
+  "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+  "title": "Top K Most Populated Countries (1980-2023)",
+  "width": 800,
+  "height": 600,
+  "data": {
+    "url": "data/pops-data.json"
+  },
+  "params": [
+		{ "name": "K", "value": 5 ,
+			"bind": {"input": "range", "min": 5, "max": 10, "step": 1 }
+		}
+	],
+  "transform": [
+    {
+      "calculate": "datum.population / 1000000",
+      "as": "population_millions"
+    },
+    {
+    "sort": [
+      {"field": "population", "order": "descending"}
+		],
+		"window": [{
+		  "op": "rank",
+		  "as": "rank"
+		}],
+		"groupby": ["year"]
+	  },
+    { "filter": "datum.rank <= K" }
+  ],
+  "encoding": {
+    "x": {  
+      "field": "year",
+      "type": "ordinal" ,
+      "sort": [1980,2000,2010,2022,2023],
+      "axis": { "labelAngle": 0 , "labelFontSize": 12 , "titleFontSize": 14},
+      "title": "Year"
+    },
+    "y": {
+      "field": "rank",
+      "type": "quantitative",
+      "sort": "descending",
+      "scale": {"domain": [0.5, {"expr": "K+0.5"}]}, 
+      "axis": {
+        "labelAngle": 0,
+        "labelFontSize": 12,
+        "tickMinStep": 1,
+        "tickCount": {"expr": "K"}, 
+        "titleFontSize": 14
+      },
+      "title":  "Country's Ranking"
+    }
+  },
+  "layer": [
+    {
+      "mark": {"type": "line", "interpolate": "monotone"},
+      "encoding": {
+        "color": {
+          "field": "Country",
+          "scale": {
+            "type": "ordinal",
+            "domain": ["Bangladesh", "Brazil", "China", "Germany", "India", "Indonesia", "Japan", "Mexico", "Nigeria", "Pakistan", "Russia", "United States"],
+            "range": ["#ADD8E6", "#00BFFF", "#1E90FF", "#DA70D6", "#FF1493", "#B03060", "#FF4500", "#FFA500", "#F4A460", "#808000", "#FFFF00", "#008B8B"]
+          }
+        },
+        "size":{
+          "condition":  {"param": "sel_country_leg", "empty": false, "value": 5},
+          "value": 1
+        }
+      }
+    },   
+    {
+      "mark": {"type": "text", "fontSize" : 15, "fontStyle": "italic", "align" : "center"},
+      "encoding": {
+        "text": {"value": "India overtook China in 2023"},
+        "x": {"datum": 2023},
+        "y": {"datum": 0.5}
+      }
+    },
+    {
+      "params": [
+        {
+          "name": "sel_country_leg", 
+          "select": {
+            "type": "point",  
+            "on": "click",  
+            "fields": ["Country"]
+          },
+          "bind": "legend"
+        }
+      ],
+      "mark": {"type": "circle", "size": 200, "opacity":1},
+      "encoding": {
+        "color": {
+          "condition":  {"param": "sel_country_leg", "empty": false, "value": "black"},
+          "field": "Country",
+          "scale": {
+            "type": "ordinal",
+            "domain": ["Bangladesh", "Brazil", "China", "Germany", "India", "Indonesia", "Japan", "Mexico", "Nigeria", "Pakistan", "Russia", "United States"],
+            "range": ["#ADD8E6", "#00BFFF", "#1E90FF", "#DA70D6", "#FF1493", "#B03060", "#FF4500", "#FFA500", "#F4A460", "#808000", "#FFFF00", "#008B8B"]
+          }
+        },
+        "tooltip": [
+          {"field": "Country", "type": "nominal", "title": "Country"},
+          {"field": "year", "type": "ordinal", "title": "Year"},
+          {"field": "population_millions", "type": "quantitative", "title": "Population (Millions)", "format": ",.2f"}
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,76 @@
+{
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "title": "Population Growth Rate of Each Country in the World (1980 - 2023)",
+    "width": 1200,
+    "height": 500,
+    "data": {
+        "url": "data/countries.topojson",
+        "format": {"type": "topojson", "feature": "countries"}
+    },
+    "projection": {"type": "equalEarth"},
+    "layer": [
+        {
+            "transform": [
+            {
+                "calculate": "'Data is not available in ' + datum.properties.NAME",
+                "as": "note"
+            }
+            ],
+            "mark": {"type": "geoshape", "fill": "lightgray", "stroke": "gray"},
+            "encoding": {"tooltip": {"field": "note"}}
+        },
+        {
+            "data": {
+                "url": "data/oceans.topojson",
+                "format": {"type": "topojson", "feature": "oceans"}
+            },
+            "mark": {"type": "geoshape", "fill": "lightcyan"}
+        },
+        {
+            "data": {
+                "url": "data/graticules.topojson",
+                "format": {"type": "topojson", "feature": "graticules"}
+            },
+            "mark": {"type": "geoshape", "fill": null, "stroke": "lightgray"}
+        },
+        {
+            "transform": [
+                {
+                    "lookup": "properties.NAME",
+                    "from": {
+                        "data": {
+                            "url": "data/countries-data.csv"
+                        },
+                        "key": "country",
+                        "fields": ["pop2023", "pop1980"]
+                    }
+                },
+                {
+                    "calculate": "(datum.pop2023 - datum.pop1980) / datum.pop1980 * 100",
+                    "as": "growthRate"
+                },
+                {
+                    "calculate": "datum.growthRate == 0 ? null : datum.growthRate",
+                    "as": "growthRate"
+                }
+            ],
+            "mark": {"type": "geoshape", "stroke": "gray"},
+            "encoding": {
+                "color": {
+                    "field": "growthRate",
+                    "type": "quantitative",
+                    "title": "Population Growth Rate (%)",
+                    "scale": {
+                        "domain": [-25, -10, 0, 10, 25, 50, 75, 100, 200, 500, 800],
+                        "range": ["#ca0b22", "#ff5500", "fcac64", "#fedd90", "#faf8c1", "#dcf1ec", "#abd6e8", "#75abd0", "#4a74b4", "#420a68", "170c3b"]
+                    }
+                },
+                "tooltip": [
+                    {"field": "properties.NAME", "type": "nominal", "title": "Country"},
+                    {"field": "growthRate", "type": "quantitative", "title": "Population Growth Rate (%)", "format": ",.2f"}
+                ]
+            }
+        }
+    ],
+    "config": {}
+}
